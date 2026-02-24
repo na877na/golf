@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Golf Causal Chain AI v1.1</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --card: rgba(15, 23, 42, 0.86);
+      --line: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --danger: #f43f5e;
+      --warn: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .title { font-size: 1.8rem; margin: 0; color: var(--primary); }
+    .subtitle { margin: 8px 0 20px; color: var(--muted); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 960px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .card h2 { font-size: 1.1rem; margin: 0 0 10px; color: #bae6fd; }
+    label { display: block; font-size: 0.9rem; color: var(--muted); margin: 10px 0 6px; }
+
+    textarea, input {
+      width: 100%;
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.95rem;
+    }
+
+    textarea { min-height: 140px; }
+
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 12px;
+      background: #1e293b;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--primary);
+      color: #082f49;
+      border-color: #7dd3fc;
+      font-weight: 700;
+    }
+
+    button.danger {
+      color: #fecdd3;
+      border-color: var(--danger);
+      background: rgba(244, 63, 94, .12);
+    }
+
+    .error {
+      color: #fde68a;
+      font-size: 0.9rem;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+
+    .node-edit-row {
+      display: grid;
+      grid-template-columns: 30px 1fr auto auto auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .node-index { color: var(--muted); font-size: 0.8rem; text-align: right; }
+
+    .chain {
+      margin-top: 16px;
+    }
+
+    .chain-node {
+      border: 1px solid #0ea5e9;
+      background: rgba(14, 165, 233, .08);
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .arrow { text-align: center; color: var(--primary); margin: 2px 0; }
+
+    .preview-help {
+      margin-top: 10px;
+      font-size: 0.86rem;
+      color: var(--muted);
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 10px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1 class="title">Golf Causal Chain AI</h1>
+    <p class="subtitle">ゴルフスイングの原因→結果を、AI生成と手動編集で整理するアプリ。</p>
+
+    <section class="grid">
+      <article class="card">
+        <h2>1) 相談・気づきを入力</h2>
+        <textarea id="memo" placeholder="例: 切り返しで胸が先に開いてしまい、トップやスライスが出る。"></textarea>
+
+        <label for="apiKey">Gemini APIキー（任意）</label>
+        <input id="apiKey" placeholder="AIza..." />
+
+        <div class="row" style="margin-top: 10px;">
+          <button id="generateBtn" class="primary">AIで因果チェーン生成</button>
+          <button id="sampleBtn">サンプルに戻す</button>
+        </div>
+        <div id="error" class="error"></div>
+        <div class="preview-help">
+          プレビューできない場合は、このHTMLをブラウザで直接開くか、
+          <code>python3 -m http.server 4173</code> で起動して 
+          <code>http://localhost:4173/golf-causal-chain-ai_v1.0.html</code> にアクセスしてください。
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>2) 手動で調整</h2>
+        <div class="row" style="margin-bottom: 10px;">
+          <button id="addNodeBtn">+ ノード追加</button>
+        </div>
+        <div id="nodeEditor"></div>
+      </article>
+    </section>
+
+    <section class="card chain">
+      <h2>3) 因果チェーン表示</h2>
+      <div class="grid">
+        <div id="chainView"></div>
+        <textarea id="chainText" readonly></textarea>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const initialNodes = [
+      "切り返しで上半身が先に動く",
+      "体の回転が先行する",
+      "クラブが外から入りやすい",
+      "入射が安定しない",
+      "スピンが増える or 球が軽くなる",
+      "方向がばらつく"
+    ];
+
+    let nodes = [...initialNodes];
+
+    const memoEl = document.getElementById('memo');
+    const apiKeyEl = document.getElementById('apiKey');
+    const errorEl = document.getElementById('error');
+    const nodeEditorEl = document.getElementById('nodeEditor');
+    const chainViewEl = document.getElementById('chainView');
+    const chainTextEl = document.getElementById('chainText');
+    const generateBtn = document.getElementById('generateBtn');
+
+    apiKeyEl.value = localStorage.getItem('gemini_api_key') || '';
+
+    apiKeyEl.addEventListener('input', () => {
+      localStorage.setItem('gemini_api_key', apiKeyEl.value);
+    });
+
+    function render() {
+      chainTextEl.value = nodes.join('\n↓\n');
+
+      nodeEditorEl.innerHTML = '';
+      nodes.forEach((node, i) => {
+        const row = document.createElement('div');
+        row.className = 'node-edit-row';
+
+        const idx = document.createElement('div');
+        idx.className = 'node-index';
+        idx.textContent = String(i + 1);
+
+        const input = document.createElement('input');
+        input.value = node;
+        input.addEventListener('input', (e) => {
+          nodes[i] = e.target.value;
+          render();
+        });
+
+        const upBtn = document.createElement('button');
+        upBtn.textContent = '↑';
+        upBtn.addEventListener('click', () => moveNode(i, -1));
+
+        const downBtn = document.createElement('button');
+        downBtn.textContent = '↓';
+        downBtn.addEventListener('click', () => moveNode(i, 1));
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '削除';
+        delBtn.className = 'danger';
+        delBtn.addEventListener('click', () => {
+          nodes = nodes.filter((_, idx2) => idx2 !== i);
+          render();
+        });
+
+        row.append(idx, input, upBtn, downBtn, delBtn);
+        nodeEditorEl.appendChild(row);
+      });
+
+      chainViewEl.innerHTML = '';
+      nodes.forEach((node, i) => {
+        const n = document.createElement('div');
+        n.className = 'chain-node';
+        n.textContent = node;
+        chainViewEl.appendChild(n);
+
+        if (i < nodes.length - 1) {
+          const arrow = document.createElement('div');
+          arrow.className = 'arrow';
+          arrow.textContent = '↓';
+          chainViewEl.appendChild(arrow);
+        }
+      });
+    }
+
+    function moveNode(index, dir) {
+      const next = index + dir;
+      if (next < 0 || next >= nodes.length) return;
+      [nodes[index], nodes[next]] = [nodes[next], nodes[index]];
+      render();
+    }
+
+    function parseFallback(text) {
+      return text
+        .split(/\n|→|->|↓/g)
+        .map(v => v.trim())
+        .filter(Boolean)
+        .slice(0, 8);
+    }
+
+    function buildPrompt(inputText) {
+      return `あなたはゴルフコーチです。以下の相談から、因果チェーンをJSONで返してください。\n\n要件:\n- 出力はJSONのみ\n- 形式: {"nodes":["原因1","原因2",...,"結果"]}\n- ノード数は4〜8\n- 因果順に並べる\n- ゴルフスイングの具体語を含める\n\n相談:\n${inputText}`;
+    }
+
+    async function generateByAI() {
+      errorEl.textContent = '';
+      const memo = memoEl.value.trim();
+      const apiKey = apiKeyEl.value.trim();
+
+      if (!memo) {
+        errorEl.textContent = '相談内容を入力してください。';
+        return;
+      }
+
+      if (!apiKey) {
+        const parsed = parseFallback(memo);
+        if (parsed.length >= 2) {
+          nodes = parsed;
+          render();
+          errorEl.textContent = 'APIキー未設定のため、入力文から簡易抽出しました。';
+        } else {
+          errorEl.textContent = 'Gemini APIキーを設定するか、矢印/改行で2項目以上を入力してください。';
+        }
+        return;
+      }
+
+      generateBtn.disabled = true;
+      generateBtn.textContent = '生成中...';
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: buildPrompt(memo) }] }],
+            generationConfig: { temperature: 0.4, responseMimeType: 'application/json' }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const raw = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] ? data.candidates[0].content.parts[0].text : '{}';
+        const parsed = JSON.parse(raw);
+        const resultNodes = Array.isArray(parsed.nodes) ? parsed.nodes.map(v => String(v).trim()).filter(Boolean).slice(0, 8) : [];
+
+        if (resultNodes.length < 2) {
+          throw new Error('AIの出力を解析できませんでした。');
+        }
+
+        nodes = resultNodes;
+        render();
+      } catch (e) {
+        errorEl.textContent = `AI生成に失敗しました: ${e.message}`;
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'AIで因果チェーン生成';
+      }
+    }
+
+    document.getElementById('addNodeBtn').addEventListener('click', () => {
+      nodes.push('新しい要素');
+      render();
+    });
+
+    document.getElementById('sampleBtn').addEventListener('click', () => {
+      nodes = [...initialNodes];
+      render();
+      errorEl.textContent = '';
+    });
+
+    generateBtn.addEventListener('click', generateByAI);
+
+    render();
+  </script>
+</body>
+</html>
