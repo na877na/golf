@@ -1,34 +1,339 @@
-# ゴルフ スキル因果マップ アプリ確認メモ
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>ゴルフ スキル因果マップ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:#020617;color:#f1f5f9;min-height:100vh;-webkit-font-smoothing:antialiased}
+:root{--base-c:#a78bfa;--base-bg:rgba(139,92,246,0.08);--base-bd:rgba(139,92,246,0.3);--body-c:#38bdf8;--body-bg:rgba(14,165,233,0.08);--body-bd:rgba(14,165,233,0.3);--ext-c:#34d399;--ext-bg:rgba(16,185,129,0.08);--ext-bd:rgba(16,185,129,0.3);--auto-c:#fbbf24;--auto-bg:rgba(245,158,11,0.08);--auto-bd:rgba(245,158,11,0.3);--goal-c:#f472b6;--goal-bg:rgba(244,114,182,0.08);--goal-bd:rgba(244,114,182,0.3);--ac:#818cf8;--ac-bg:rgba(99,102,241,0.08);--ac-bd:rgba(99,102,241,0.2)}
+#app{max-width:430px;margin:0 auto;min-height:100vh}
+.header{position:sticky;top:0;z-index:10;background:rgba(2,6,23,0.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.hd-left{display:flex;align-items:center;gap:9px}.hd-icon{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:15px}.hd-title{font-size:14px;font-weight:700}.hd-sub{font-size:9px;color:#475569;margin-top:1px}
+.legend-btn{font-size:10px;font-weight:700;padding:4px 9px;border-radius:7px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#64748b;cursor:pointer}.legend-btn.on{border-color:var(--ext-bd);color:var(--ext-c)}
+.legend-panel{background:rgba(15,23,42,0.9);border-bottom:1px solid rgba(255,255,255,0.06);padding:8px 14px;display:flex;flex-direction:column;gap:5px}
+.lg-item{display:flex;align-items:flex-start;gap:7px}.lg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}.lg-name{font-size:10px;font-weight:700;min-width:80px}.lg-desc{font-size:9px;color:#475569;line-height:1.4}
+.screen{display:none;padding:10px 14px 100px}.screen.active{display:block}
+.layer{margin-bottom:4px}.layer-hd{display:flex;align-items:center;gap:7px;margin-bottom:6px}.layer-pill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#64748b;white-space:nowrap}.layer-line{flex:1;height:1px;background:rgba(255,255,255,0.06)}.layer-n{font-size:9px;color:#334155}
+.cards-row{display:flex;flex-wrap:wrap;gap:5px}.sk-card{display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:7px;border:1px solid rgba(255,255,255,0.07);background:rgba(15,23,42,0.7);cursor:pointer;transition:all .13s;position:relative;font-size:10px;font-weight:600}.sk-card[data-type="base"]{border-color:var(--base-bd);background:var(--base-bg)}.sk-card[data-type="body"]{border-color:var(--body-bd);background:var(--body-bg)}.sk-card[data-type="ext"]{border-color:var(--ext-bd);background:var(--ext-bg)}.sk-card[data-type="auto"]{border-color:var(--auto-bd);background:var(--auto-bg)}.sk-card.sel{box-shadow:0 0 0 2px #6366f1}
+.sk-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}.eff-badge{position:absolute;top:-6px;right:-3px;font-size:8px;font-weight:700;padding:1px 4px;border-radius:4px;background:linear-gradient(135deg,#f59e0b,#f97316);color:#000;white-space:nowrap}
+.connector{display:flex;justify-content:center;height:16px;margin:1px 0}.conn-line{width:1px;background:linear-gradient(to bottom,rgba(255,255,255,0.08),transparent)}
+.hint-box{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;background:var(--ac-bg);border:1px solid var(--ac-bd);border-radius:10px;margin-bottom:10px;font-size:11px;line-height:1.5}.hint-icon{font-size:14px;flex-shrink:0}.hint-tag{font-size:8px;font-weight:700;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:1px}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:10;display:flex;background:rgba(2,6,23,0.95);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,0.06)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:7px 4px 12px;border:none;background:none;cursor:pointer;font-size:9px;font-weight:600;color:#475569;font-family:inherit;transition:color .15s}.nav-btn.on{color:var(--ac)}.nav-icon{font-size:16px;line-height:1}.nav-add{width:38px;height:38px;border-radius:10px;border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;align-self:center;margin:0 6px 5px}
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,0.5);display:none;align-items:flex-end}.overlay.open{display:flex}.sheet{width:100%;max-width:430px;margin:0 auto;max-height:90vh;overflow-y:auto;background:#0f172a;border-radius:18px 18px 0 0;display:flex;flex-direction:column}
+.sh-handle{width:32px;height:3px;border-radius:2px;background:#1e293b;margin:8px auto 3px}.sh-hd{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 10px;border-bottom:1px solid rgba(255,255,255,0.06)}.sh-title{font-size:14px;font-weight:700}.sh-close{width:26px;height:26px;border-radius:50%;border:none;background:#1e293b;color:#64748b;font-size:13px;cursor:pointer}.sh-body{padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.tabs{display:flex;gap:2px;background:rgba(255,255,255,0.04);padding:2px;border-radius:8px}.tab-btn{flex:1;padding:6px 4px;border:none;border-radius:6px;background:transparent;font-family:inherit;font-size:10px;font-weight:700;color:#475569;cursor:pointer;transition:all .13s}.tab-btn.on{background:#1e293b;color:var(--ac)}
+.lbl{font-size:10px;font-weight:700;color:#64748b;margin-bottom:4px}.inp,.ta,.ai-in,.rv-memo{width:100%;padding:8px 10px;border:1.5px solid rgba(255,255,255,0.08);border-radius:8px;background:#0f172a;font-family:inherit;color:#f1f5f9;outline:none}.inp{font-size:12px}.ta,.rv-memo{font-size:11px;resize:none;min-height:60px;line-height:1.6}.inp:focus,.ta:focus,.ai-in:focus,.rv-memo:focus{border-color:#6366f1}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}.gbtn{padding:7px 3px;border-radius:7px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#64748b;font-family:inherit;font-size:10px;font-weight:700;cursor:pointer;text-align:center;transition:all .12s}
+.gbtn.on,.chip.on{border-color:#6366f1;color:var(--ac);background:var(--ac-bg)}
+.gbtn.on-base{border-color:var(--base-bd);color:var(--base-c);background:var(--base-bg)}.gbtn.on-body{border-color:var(--body-bd);color:var(--body-c);background:var(--body-bg)}.gbtn.on-ext{border-color:var(--ext-bd);color:var(--ext-c);background:var(--ext-bg)}.gbtn.on-auto{border-color:var(--auto-bd);color:var(--auto-c);background:var(--auto-bg)}.gbtn.on-done{border-color:#34d399;color:#059669;background:rgba(16,185,129,0.08)}.gbtn.on-partial{border-color:#fbbf24;color:#d97706;background:rgba(245,158,11,0.08)}.gbtn.on-notyet{border-color:#f87171;color:#dc2626;background:rgba(239,68,68,0.08)}
+.chips{display:flex;flex-wrap:wrap;gap:5px}.chip{padding:4px 9px;border-radius:7px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);font-size:10px;font-weight:600;color:#64748b;cursor:pointer}
+.type-info{padding:8px 10px;border-radius:8px;border:1.5px solid;margin-bottom:2px;line-height:1.4}.type-info .ti-label{font-size:10px;font-weight:700;margin-bottom:2px}.type-info .ti-desc{font-size:10px;opacity:.8}
+.eff-row{display:flex;align-items:center;gap:7px}.eff-rank{font-size:10px;font-weight:700;color:var(--ac);min-width:22px}.eff-track{flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}.eff-bar{height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:2px;transition:width .4s}.eff-note{padding:5px 8px;font-size:10px;color:var(--ac);background:var(--ac-bg);border-radius:6px;margin-top:4px}
+.dep-item{display:flex;align-items:center;gap:7px;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:7px;font-size:11px}
+.btn-p,.btn-s,.btn-d{width:100%;padding:10px;border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}.btn-p{border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}.btn-s{border:1px solid var(--ac-bd);background:var(--ac-bg);color:var(--ac)}.btn-d{border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.06);color:#f87171}
+.divider{height:1px;background:rgba(255,255,255,0.06);margin:6px 0}
+.plan-tabs,.mode-bar{display:flex;background:rgba(255,255,255,0.03);border-radius:10px;padding:3px;margin-bottom:12px}.plan-tab,.mode-btn{flex:1;padding:8px 4px;border:none;border-radius:8px;background:transparent;font-size:12px;font-weight:700;color:#475569;cursor:pointer}.plan-tab.on,.mode-btn.on{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff}
+.topic-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}.topic-chip{padding:5px 10px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);font-size:10px;color:#94a3b8;cursor:pointer}.topic-chip.on{border-color:var(--ac);color:var(--ac);background:var(--ac-bg);font-weight:700}
+.suggest-sec{margin-bottom:10px}.suggest-hd{display:flex;align-items:center;gap:6px;margin-bottom:5px}.suggest-icon{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0}.suggest-title{font-size:10px;font-weight:700}.suggest-sub{font-size:8px;color:#475569;margin-left:auto}
+.srow{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.07);background:rgba(15,23,42,0.6);cursor:pointer;transition:all .13s;margin-bottom:4px}.srow.sel-base{border-color:var(--base-bd);background:var(--base-bg)}.srow.sel-body{border-color:var(--body-bd);background:var(--body-bg)}.srow.sel-ext{border-color:var(--ext-bd);background:var(--ext-bg)}.srow-chk{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;background:rgba(255,255,255,0.04);color:#fff}.srow-chk.on-base{border-color:#8b5cf6;background:#8b5cf6}.srow-chk.on-body{border-color:#0ea5e9;background:#0ea5e9}.srow-chk.on-ext{border-color:#10b981;background:#10b981}.srow-name{font-size:11px;font-weight:600}.srow-ext{font-size:9px;font-weight:600;margin-top:1px}.srow-eff{font-size:7px;font-weight:700;padding:1px 4px;border-radius:3px;background:var(--ac-bg);color:var(--ac);flex-shrink:0}
+.plan-card,.rv-card{padding:10px;border-radius:9px;background:var(--ac-bg);border:1px solid var(--ac-bd);margin-bottom:10px}.plan-card-label{font-size:9px;font-weight:700;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}.plan-badge-row{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px}.plan-badge{font-size:8px;font-weight:700;padding:1px 6px;border-radius:4px;flex-shrink:0;margin-top:2px;white-space:nowrap}.plan-item-text{font-size:11px;font-weight:600}.plan-item-sub{font-size:9px;color:#64748b;margin-top:1px}.plan-empty,.rv-empty{text-align:center;padding:14px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.08);border-radius:9px;font-size:11px;color:#475569;line-height:1.7}
+.ai-section{margin-top:6px;padding:10px;border-radius:9px;background:rgba(99,102,241,0.04);border:1px solid var(--ac-bd)}.ai-wrap{position:relative}.ai-in{font-size:11px;padding:8px 36px 8px 10px;resize:none;min-height:56px;line-height:1.5}.ai-send{position:absolute;bottom:7px;right:7px;width:26px;height:26px;border-radius:6px;background:#6366f1;border:none;color:#fff;cursor:pointer}.ai-send:disabled{background:#334155;cursor:default}
+.rv-date{font-size:9px;color:#475569;margin-bottom:4px}.rv-topic{font-size:10px;font-weight:700;color:var(--ac);margin-bottom:3px}.rv-skills{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px}.rv-sk{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600}.rv-memo-area{margin-top:5px}
 
-## 確認結果（結論）
-提供されたHTMLは **UIデザインの完成度は高い** ですが、現状のままではブラウザで実行時に動作不全になります。
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}.stat-card{padding:8px;border-radius:8px;border:1px solid var(--ac-bd);background:var(--ac-bg);text-align:center}.stat-v{font-size:14px;font-weight:700}.stat-l{font-size:9px;color:#64748b}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}.cal-btn{border:1px solid rgba(255,255,255,0.12);background:transparent;color:#94a3b8;padding:2px 7px;border-radius:6px;cursor:pointer}.week-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}.week-row div{font-size:9px;color:#475569;text-align:center}.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.cal-cell{min-height:44px;padding:4px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);font-size:9px}.cal-cell.off{opacity:.25}.cal-cell.on{border-color:var(--ac-bd);background:var(--ac-bg)}
+.rv-skill-row{display:flex;align-items:center;justify-content:space-between;gap:7px;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:7px;margin-bottom:4px}.rv-seg{display:flex;gap:4px}.rv-seg button{border:1px solid rgba(255,255,255,0.12);background:transparent;color:#94a3b8;border-radius:6px;padding:2px 7px;font-size:10px;cursor:pointer}.rv-seg button.on-done{border-color:#10b981;color:#10b981;background:rgba(16,185,129,0.12)}.rv-seg button.on-no{border-color:#f43f5e;color:#f43f5e;background:rgba(244,63,94,0.12)}
+.hist{display:flex;flex-direction:column;gap:6px}.hist-row{display:grid;grid-template-columns:84px 1fr 26px;gap:6px;align-items:center}.hist-track{height:10px;border-radius:6px;background:rgba(255,255,255,0.06);overflow:hidden;display:flex}.hist-done{background:#10b981}.hist-no{background:#f43f5e}
+.loading{display:flex;align-items:center;gap:5px;padding:6px 0;color:#475569;font-size:10px}.dots{display:flex;gap:3px}.dot{width:4px;height:4px;border-radius:50%;background:var(--ac);animation:bop 1.2s ease-in-out infinite}.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}@keyframes bop{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-3px);opacity:1}}
+.err-box{padding:6px 8px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:6px;font-size:10px;color:#f87171}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}.fade-up{animation:fadeUp .18s ease}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header"><div class="hd-left"><div class="hd-icon">⛳</div><div><div class="hd-title">スキル因果マップ</div><div class="hd-sub">4タイプで整理・因果を可視化</div></div></div><button class="legend-btn" id="legend-btn" onclick="toggleLegend()">凡例</button></div>
+  <div class="legend-panel" id="legend-panel" style="display:none"><div class="lg-item"><span class="lg-dot" style="background:var(--base-c)"></span><span class="lg-name" style="color:var(--base-c)">ベース</span><span class="lg-desc">構えで作る基準。初心者が最優先</span></div><div class="lg-item"><span class="lg-dot" style="background:var(--body-c)"></span><span class="lg-name" style="color:var(--body-c)">身体フォーカス</span><span class="lg-desc">練習で1つだけ意識する身体動作</span></div><div class="lg-item"><span class="lg-dot" style="background:var(--ext-c)"></span><span class="lg-name" style="color:var(--ext-c)">外部フォーカス</span><span class="lg-desc">実際に打つ時に身体の外へ意識</span></div><div class="lg-item"><span class="lg-dot" style="background:var(--auto-c)"></span><span class="lg-name" style="color:var(--auto-c)">アウトカム</span><span class="lg-desc">直接意識すると崩れる副産物</span></div></div>
 
-## 主な指摘事項
+  <div id="screen-map" class="screen active"><div id="hint-area"></div><div id="layer-area"></div></div>
+  <div id="screen-plan" class="screen">
+    <div class="mode-bar"><button class="mode-btn on" id="mode-goal" onclick="setPlanMode('goal')">🏁 目的から</button><button class="mode-btn" id="mode-symptom" onclick="setPlanMode('symptom')">🩺 課題から</button><button class="mode-btn" id="mode-free" onclick="setPlanMode('free')">📋 自由選択</button></div>
+    <div id="topic-area"></div><div id="plan-card-area"></div><div id="suggest-area"></div>
+    <div class="ai-section"><div class="lbl">💬 AIに相談</div><div class="ai-wrap"><textarea class="ai-in" id="ai-input" placeholder="例：ドライバーがスライスする…"></textarea><button class="ai-send" id="ai-send-btn" onclick="handleAI()">↑</button></div><div style="font-size:8px;color:#475569;margin-top:2px">APIキー（初回入力時に設定）</div><div id="ai-status"></div><div id="ai-result"></div></div>
+  </div>
+  <div id="screen-review" class="screen"><div id="review-list"></div></div>
 
-1. **JavaScript関数の未定義**
-   - `onclick` で参照されている関数（例: `toggleLegend()`, `showScreen()`, `openAdd()`, `addSkill()`, `handleAI()` など）が、提示コード内に存在しません。
-   - そのため、各ボタン押下時に `ReferenceError` が発生します。
+  <div class="bottom-nav"><button class="nav-btn on" id="nav-map" onclick="showScreen('map')"><span class="nav-icon">🗺</span>因果マップ</button><button class="nav-btn" id="nav-plan" onclick="showScreen('plan')"><span class="nav-icon">🎯</span>練習プラン</button><button class="nav-btn" id="nav-review" onclick="showScreen('review')"><span class="nav-icon">📝</span>振り返り</button><button class="nav-add" onclick="openAdd()">＋</button></div>
 
-2. **HTML終端の不足**
-   - 提示コード末尾が `</div>` で終わっており、`</body>` / `</html>` が見当たりません。
-   - ブラウザ補完で表示される場合はあるものの、正式には不完全なドキュメント構造です。
+  <div class="overlay" id="detail-ov" onclick="closeOv('detail-ov')"><div class="sheet" onclick="event.stopPropagation()"><div class="sh-handle"></div><div class="sh-hd"><span class="sh-title" id="detail-title"></span><button class="sh-close" onclick="closeOv('detail-ov')">✕</button></div><div class="sh-body" id="detail-body"></div></div></div>
 
-3. **初期描画ロジックの不足**
-   - `#hint-area`, `#layer-area`, `#topic-area`, `#plan-card-area`, `#suggest-area`, `#review-list` はプレースホルダのみで、描画ロジックが未実装です。
+  <div class="overlay" id="add-ov" onclick="closeOv('add-ov')"><div class="sheet" onclick="event.stopPropagation()"><div class="sh-handle"></div><div class="sh-hd"><span class="sh-title">スキルを追加</span><button class="sh-close" onclick="closeOv('add-ov')">✕</button></div><div class="sh-body"><div><div class="lbl">スキル名</div><input class="inp" id="add-label" placeholder="例：左足踏み込み…"></div><div><div class="lbl">タイプ</div><div class="g2" id="add-type-btns"></div></div><div><div class="lbl">習得状態</div><div class="g3" id="add-m-btns"></div></div><div id="add-ext-wrap"><div class="lbl">どういう意識？</div><input class="inp" id="add-ext" placeholder="例：芝を払う…"></div><div><div class="lbl">前提スキル</div><div class="chips" id="add-pre-chips"></div></div><div><div class="lbl">メモ</div><textarea class="ta" id="add-memo" placeholder="気づき…"></textarea></div><button class="btn-p" onclick="addSkill()">追加する</button></div></div></div>
+</div>
 
-4. **AIセクションの接続仕様未実装**
-   - 「APIキー（初回入力時に設定）」と記載がありますが、入力UI・保存処理・API通信処理が見当たりません。
+<script>
+const FT={
+  base:{label:"ベース",desc:"構えで毎回チェック",color:"var(--base-c)",dot:"#8b5cf6",cls:"base"},
+  body:{label:"身体フォーカス",desc:"練習で1つだけ意識",color:"var(--body-c)",dot:"#0ea5e9",cls:"body"},
+  ext:{label:"外部フォーカス",desc:"打つ時に外へ意識",color:"var(--ext-c)",dot:"#10b981",cls:"ext"},
+  auto:{label:"アウトカム",desc:"直接意識すると崩れる",color:"var(--auto-c)",dot:"#f59e0b",cls:"auto"}
+};
+const MS={done:{label:"できてる",color:"#10b981"},partial:{label:"途中",color:"#f59e0b"},notyet:{label:"まだ",color:"#f43f5e"}};
 
-## すぐに実施すべき最小対応
+const GOALS=[
+  {id:"g_impact",label:"インパクト再現性",desc:"当たりの感触を確認",related:["arm_release","spine_angle","brush_turf","drop_weight"]},
+  {id:"g_direction",label:"方向安定",desc:"狙った方向に飛ばす",related:["posture","upper_turn","target_gate","grip"]},
+  {id:"g_distance",label:"飛距離アップ",desc:"もっと飛ばしたい",related:["hip_rotation","weight_shift","arm_release","upper_turn"]},
+  {id:"g_consistency",label:"安定した球質",desc:"毎回同じ球を打つ",related:["grip","stance","posture","spine_angle","ball_pos"]},
+  {id:"g_follow",label:"フォロースルー改善",desc:"振り抜きを良くする",related:["arm_release","hip_rotation","target_gate"]}
+];
+const SYMPTOMS=[
+  {id:"s_slice",label:"スライス",desc:"右に曲がる",related:["grip","upper_turn","target_gate","hip_rotation"]},
+  {id:"s_hook",label:"フック/引っかけ",desc:"左に飛ぶ・曲がる",related:["grip","hip_rotation","target_gate","upper_turn"]},
+  {id:"s_duff",label:"ダフリ",desc:"手前を叩く",related:["ball_pos","spine_angle","brush_turf","weight_shift"]},
+  {id:"s_top",label:"トップ/薄い当たり",desc:"上を叩く",related:["spine_angle","ball_pos","arm_release","brush_turf"]},
+  {id:"s_shank",label:"シャンク",desc:"ネックに当たる",related:["ball_pos","posture","stance","weight_setup"]},
+  {id:"s_push",label:"プッシュ(右に出る)",desc:"右にまっすぐ",related:["hip_rotation","target_gate","upper_turn"]},
+  {id:"s_pull",label:"プル(左に出る)",desc:"左にまっすぐ",related:["upper_turn","hip_rotation","target_gate","grip"]},
+  {id:"s_distance",label:"飛距離が落ちた",desc:"以前より飛ばない",related:["arm_release","hip_rotation","weight_shift","upper_turn"]},
+  {id:"s_rush",label:"切り返しが速い",desc:"トップで焦る",related:["left_foot","weight_shift","arm_release","upper_turn"]},
+  {id:"s_body_up",label:"体が起き上がる",desc:"前傾が崩れる",related:["spine_angle","posture","lower_body","ball_pos"]}
+];
 
-- まずは以下を優先して実装するのが安全です。
-  1. `onclick` で参照している全関数の定義
-  2. 画面状態管理（現在タブ、モーダル開閉、選択スキル）
-  3. 最小データモデル（`skills[]`）と描画関数
-  4. `</body>`, `</html>` を追加
+let skills=JSON.parse(localStorage.getItem("golf_skills"))||[
+  {id:"grip",label:"グリップ圧",focusType:"base",mastery:"done",prereqs:[],memo:"強く握ると腕が固まる",extCue:""},
+  {id:"stance",label:"スタンス幅",focusType:"base",mastery:"done",prereqs:[],memo:"肩幅より少し広め",extCue:""},
+  {id:"posture",label:"アドレス姿勢",focusType:"base",mastery:"partial",prereqs:[],memo:"股関節から前傾",extCue:""},
+  {id:"ball_pos",label:"ボール位置",focusType:"base",mastery:"partial",prereqs:[],memo:"アイアンは体の中央寄り",extCue:""},
+  {id:"weight_setup",label:"体重配分",focusType:"base",mastery:"done",prereqs:["stance","posture"],memo:"両足均等か少し内側",extCue:""},
+  {id:"lower_body",label:"下半身安定",focusType:"base",mastery:"partial",prereqs:["stance"],memo:"土台として最重要",extCue:""},
+  {id:"spine_angle",label:"前傾・軸維持",focusType:"base",mastery:"partial",prereqs:["posture"],memo:"胸の高さを変えない",extCue:""},
+  {id:"left_foot",label:"左足で踏み込む",focusType:"body",mastery:"done",prereqs:["lower_body"],memo:"切り返しの起点",extCue:"左足で地面を踏む"},
+  {id:"upper_turn",label:"上半身回旋",focusType:"body",mastery:"notyet",prereqs:["lower_body","spine_angle"],memo:"「肩を回す」ではなく結果",extCue:"背中をターゲットに向ける"},
+  {id:"arm_release",label:"腕の脱力",focusType:"body",mastery:"notyet",prereqs:["grip","lower_body","spine_angle"],memo:"「重さが落ちる」で意識",extCue:"クラブの重さを感じる"},
+  {id:"weight_shift",label:"体重移動",focusType:"body",mastery:"notyet",prereqs:["lower_body","weight_setup"],memo:"「移動」ではなく「左踏み」",extCue:"左足で地面を押す"},
+  {id:"hip_rotation",label:"腰の回転",focusType:"body",mastery:"notyet",prereqs:["lower_body","weight_setup"],memo:"「回す」ではなく回った結果",extCue:"バックルをターゲットへ"},
+  {id:"brush_turf",label:"芝を払う",focusType:"ext",mastery:"notyet",prereqs:["spine_angle","arm_release"],memo:"ボールの先を払う",extCue:"芝を薄くこする"},
+  {id:"target_gate",label:"ターゲットゲート",focusType:"ext",mastery:"notyet",prereqs:["upper_turn"],memo:"目標に向かって振り抜く",extCue:"旗竿の方へ押し出す"},
+  {id:"drop_weight",label:"重さを落とす",focusType:"ext",mastery:"notyet",prereqs:["arm_release"],memo:"クラブの重さで自然に",extCue:"重力に任せる"},
+  {id:"takeaway",label:"テイクバック軌道",focusType:"auto",mastery:"notyet",prereqs:["spine_angle","arm_release"],memo:"直接操作不能",extCue:""},
+  {id:"top",label:"トップの形",focusType:"auto",mastery:"notyet",prereqs:["upper_turn","arm_release"],memo:"結果として決まる",extCue:""},
+  {id:"transition",label:"切り返し順序",focusType:"auto",mastery:"notyet",prereqs:["lower_body","upper_turn","arm_release","weight_shift"],memo:"直接操作不能",extCue:""},
+  {id:"downswing",label:"ダウンスイング軌道",focusType:"auto",mastery:"notyet",prereqs:["transition","hip_rotation"],memo:"直接操作不能",extCue:""},
+  {id:"lag",label:"ラグ保持",focusType:"auto",mastery:"notyet",prereqs:["transition","arm_release"],memo:"直接操作不能",extCue:""}
+];
 
-## 補足
+let reviews=JSON.parse(localStorage.getItem("golf_reviews"))||[];
 
-- CSS設計（変数、カテゴリ色分け、モバイルUI、ボトムナビ、シートUI）は一貫性があり、実装方針として非常に良いです。
-- 先に「動く最小版（MVP）」を作り、その後 AI 提案ロジックを段階的に接続する進め方を推奨します。
+let st={screen:"map",selId:null,editTab:"status",planMode:"goal",topicId:null,
+  plan:{baseIds:[],bodyId:null,extIds:[]},reviewYear:new Date().getFullYear(),reviewMonth:new Date().getMonth(),reviewSelectedDayKey:null,
+  addType:"base",addMastery:"notyet",addPrereqs:[]};
 
+function saveAll(){localStorage.setItem("golf_skills",JSON.stringify(skills));localStorage.setItem("golf_reviews",JSON.stringify(reviews));}
+function calcLayers(){const dm={};function d(id,v){if(dm[id]!==undefined)return dm[id];if(v.has(id))return 0;v.add(id);const s=skills.find(x=>x.id===id);if(!s||!s.prereqs.length){dm[id]=0;return 0;}dm[id]=Math.max(...s.prereqs.map(p=>d(p,new Set(v))))+1;return dm[id];}skills.forEach(s=>d(s.id,new Set()));const mx=Math.max(...Object.values(dm),0);const L=[];for(let i=0;i<=mx;i++)L.push(skills.filter(s=>dm[s.id]===i));return L;}
+function calcEff(){const sc={};skills.forEach(s=>{const sw=s.mastery==="notyet"?3:s.mastery==="partial"?1.5:0;const deps=skills.filter(o=>o.prereqs.includes(s.id));const dw=deps.reduce((sum,d)=>sum+(d.mastery==="notyet"?2:d.mastery==="partial"?1:0),0);sc[s.id]=sw*(1+deps.length*0.6)+dw*0.5;});return sc;}
+function layerName(i,t){if(i===0)return"ベース";if(i===t-1&&t>2)return"結果";if(i===t-2&&t>3)return"上層";return t<=3?"中層":"中層"+i;}
+
+function renderMap(){
+  const layers=calcLayers(),eff=calcEff(),mxE=Math.max(...Object.values(eff),1);
+  const ranked=[...skills].sort((a,b)=>(eff[b.id]||0)-(eff[a.id]||0));
+  const top=ranked[0];
+  const ha=document.getElementById("hint-area");
+  if(top&&(eff[top.id]||0)>0){
+    const dl=skills.filter(s=>s.prereqs.includes(top.id)).map(s=>"「"+s.label+"」").join("・");
+    ha.innerHTML=`<div class="hint-box fade-up"><div class="hint-icon">⚡</div><div><div class="hint-tag">上達効率 No.1</div><strong>「${top.label}」</strong>（${FT[top.focusType].label}）を改善すると${dl?"、"+dl+"に連動改善":"直接改善できます"}</div></div>`;
+  } else ha.innerHTML="";
+  const area=document.getElementById("layer-area");
+  area.innerHTML=layers.map((lsk,li)=>{
+    const cards=lsk.map(sk=>{const isT=ranked[0]?.id===sk.id&&(eff[sk.id]||0)/mxE>0.25;return `<div class="sk-card${st.selId===sk.id?' sel':''}" data-type="${sk.focusType}" onclick="openDetail('${sk.id}')">${isT?'<div class="eff-badge">⚡1</div>':''}<span class="sk-dot" style="background:${MS[sk.mastery].color}"></span>${sk.label}</div>`;}).join("");
+    const c=li<layers.length-1?'<div class="connector"><div class="conn-line"></div></div>':'';
+    return `<div class="layer fade-up" style="animation-delay:${li*0.04}s"><div class="layer-hd"><span class="layer-pill">${layerName(li,layers.length)}</span><div class="layer-line"></div><span class="layer-n">${lsk.length}</span></div><div class="cards-row">${cards}</div></div>${c}`;
+  }).join("");
+}
+
+function openDetail(id){st.selId=id;st.editTab="status";const s=skills.find(x=>x.id===id);if(!s)return;document.getElementById("detail-title").textContent=s.label;renderDetail();document.getElementById("detail-ov").classList.add("open");renderMap();}
+function renderDetail(){
+  const sk=skills.find(s=>s.id===st.selId);if(!sk)return;
+  const ft=FT[sk.focusType],eff=calcEff(),mxE=Math.max(...Object.values(eff),1);
+  const rk=[...skills].sort((a,b)=>(eff[b.id]||0)-(eff[a.id]||0));
+  const rank=rk.findIndex(s=>s.id===sk.id)+1,ep=(eff[sk.id]||0)/mxE;
+  const deps=skills.filter(s=>s.prereqs.includes(sk.id));
+  const pObjs=sk.prereqs.map(p=>skills.find(s=>s.id===p)).filter(Boolean);
+  const tabs=`<div class="tabs">${["status","detail","connections"].map(t=>`<button class="tab-btn${st.editTab===t?' on':''}" onclick="st.editTab='${t}';renderDetail()">${t==="status"?"状態":t==="detail"?"詳細":"つながり"}</button>`).join("")}</div>`;
+  let c="";
+  if(st.editTab==="status"){
+    c=`<div class="type-info" style="background:${ft.cls==='base'?'var(--base-bg)':ft.cls==='body'?'var(--body-bg)':ft.cls==='ext'?'var(--ext-bg)':'var(--auto-bg)'};border-color:${ft.dot}"><div class="ti-label" style="color:${ft.color}">${ft.label}</div><div class="ti-desc" style="color:#94a3b8">${ft.desc}</div></div>${sk.extCue?`<div style="padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)"><div style="font-size:9px;color:#475569;margin-bottom:2px">→ どういう意識？</div><div style="font-size:13px;font-weight:700">${sk.extCue}</div></div>`:''}<div><div class="lbl">習得状態</div><div class="g3">${Object.entries(MS).map(([k,v])=>`<button class="gbtn${sk.mastery===k?' on-'+k:''}" onclick="updSk('${sk.id}',{mastery:'${k}'})">${v.label}</button>`).join("")}</div></div><div><div class="lbl">タイプ</div><div class="g2">${Object.entries(FT).map(([k,v])=>`<button class="gbtn${sk.focusType===k?' on-'+k:''}" onclick="updSk('${sk.id}',{focusType:'${k}'})">${v.label}</button>`).join("")}</div></div><div><div class="lbl">効率スコア</div><div class="eff-row"><span class="eff-rank">#${rank}</span><div class="eff-track"><div class="eff-bar" style="width:${ep*100}%"></div></div><span style="font-size:10px;color:#475569">${Math.round(ep*100)}</span></div>${rank===1&&ep>0.01?'<div class="eff-note">⚡ 最も多く連動改善が起こるスキル</div>':''}</div>`;
+  } else if(st.editTab==="detail"){
+    c=`<div><div class="lbl">スキル名</div><input class="inp" value="${sk.label}" onchange="updSk('${sk.id}',{label:this.value})"></div><div><div class="lbl">どういう意識？</div><input class="inp" value="${sk.extCue||''}" onchange="updSk('${sk.id}',{extCue:this.value})" placeholder="例：芝を払う…"></div><div><div class="lbl">メモ</div><textarea class="ta" onchange="updSk('${sk.id}',{memo:this.value})">${sk.memo||''}</textarea></div><div class="divider"></div><button class="btn-d" onclick="delSk('${sk.id}')">このスキルを削除</button>`;
+  } else {
+    const ch=skills.filter(s=>s.id!==sk.id).map(s=>`<button class="chip${sk.prereqs.includes(s.id)?' on':''}" onclick="togglePre('${sk.id}','${s.id}')">${s.label}</button>`).join("");
+    const w=pObjs.length>0&&!pObjs.every(p=>p.mastery==="done")?`<div style="font-size:10px;color:#f59e0b;padding:5px 8px;background:rgba(245,158,11,0.08);border-radius:6px;margin-top:4px">⚠ 前提が不十分</div>`:'';
+    const dh=deps.length>0?`<div><div class="lbl">連動スキル（${deps.length}）</div><div style="display:flex;flex-direction:column;gap:4px">${deps.map(d=>`<div class="dep-item"><span class="sk-dot" style="background:${MS[d.mastery].color}"></span><span style="flex:1">${d.label}</span><span style="font-size:9px;font-weight:700;color:${FT[d.focusType].color}">${FT[d.focusType].label}</span></div>`).join("")}</div></div>`:'';
+    c=`<div><div class="lbl">前提スキル</div><div class="chips">${ch}</div>${w}</div>${dh}`;
+  }
+  document.getElementById("detail-body").innerHTML=tabs+c;
+}
+
+function updSk(id,p){skills=skills.map(s=>s.id===id?{...s,...p}:s);saveAll();renderDetail();renderMap();renderPlan();renderReviews();}
+function delSk(id){skills=skills.filter(s=>s.id!==id).map(s=>({...s,prereqs:s.prereqs.filter(p=>p!==id)}));st.plan.baseIds=st.plan.baseIds.filter(x=>x!==id);st.plan.extIds=st.plan.extIds.filter(x=>x!==id);if(st.plan.bodyId===id)st.plan.bodyId=null;saveAll();closeOv("detail-ov");st.selId=null;renderMap();renderPlan();renderReviews();}
+function togglePre(id,pid){skills=skills.map(s=>s.id!==id?s:{...s,prereqs:s.prereqs.includes(pid)?s.prereqs.filter(r=>r!==pid):[...s.prereqs,pid]});saveAll();renderDetail();renderMap();}
+
+function openAdd(){st.addType="base";st.addMastery="notyet";st.addPrereqs=[];document.getElementById("add-label").value="";document.getElementById("add-ext").value="";document.getElementById("add-memo").value="";renderAddForm();document.getElementById("add-ov").classList.add("open");}
+function renderAddForm(){document.getElementById("add-type-btns").innerHTML=Object.entries(FT).map(([k,v])=>`<button class="gbtn${st.addType===k?' on-'+k:''}" onclick="st.addType='${k}';renderAddForm()">${v.label}</button>`).join("");document.getElementById("add-m-btns").innerHTML=Object.entries(MS).map(([k,v])=>`<button class="gbtn${st.addMastery===k?' on-'+k:''}" onclick="st.addMastery='${k}';renderAddForm()">${v.label}</button>`).join("");document.getElementById("add-pre-chips").innerHTML=skills.map(s=>`<button class="chip${st.addPrereqs.includes(s.id)?' on':''}" onclick="toggleAddPre('${s.id}')">${s.label}</button>`).join("");const extWrap=document.getElementById("add-ext-wrap");if(extWrap)extWrap.style.display=st.addType==="auto"?"none":"block";}
+function toggleAddPre(id){if(st.addPrereqs.includes(id))st.addPrereqs=st.addPrereqs.filter(x=>x!==id);else st.addPrereqs.push(id);renderAddForm();}
+function addSkill(){const l=document.getElementById("add-label").value.trim();if(!l)return;const id="sk_"+Math.random().toString(36).slice(2,7);skills.push({id,label:l,focusType:st.addType,mastery:st.addMastery,prereqs:[...st.addPrereqs],memo:document.getElementById("add-memo").value,extCue:st.addType==="auto"?"":document.getElementById("add-ext").value});saveAll();closeOv("add-ov");renderMap();renderPlan();renderReviews();}
+
+function setPlanMode(m){st.planMode=m;st.topicId=null;st.plan={baseIds:[],bodyId:null,extIds:[]};document.getElementById("mode-goal").className="mode-btn"+(m==="goal"?" on":"");document.getElementById("mode-symptom").className="mode-btn"+(m==="symptom"?" on":"");document.getElementById("mode-free").className="mode-btn"+(m==="free"?" on":"");renderPlan();}
+
+function renderPlan(){
+  const topics=st.planMode==="goal"?GOALS:st.planMode==="symptom"?SYMPTOMS:[];
+  document.getElementById("topic-area").innerHTML=topics.length?`<div class="topic-chips">${topics.map(t=>`<button class="topic-chip${st.topicId===t.id?' on':''}" onclick="selectTopic('${t.id}')">${t.label}</button>`).join("")}</div>`:"";
+  const bSk=st.plan.baseIds.map(id=>skills.find(s=>s.id===id)).filter(Boolean),bodySk=skills.find(s=>s.id===st.plan.bodyId),eSk=st.plan.extIds.map(id=>skills.find(s=>s.id===id)).filter(Boolean);
+  const hasPlan=bSk.length>0||bodySk||eSk.length>0,ca=document.getElementById("plan-card-area");
+  if(hasPlan){
+    let rows="";const selTopic=st.topicId?(st.planMode==="goal"?GOALS:SYMPTOMS).find(t=>t.id===st.topicId):null;
+    if(selTopic)rows+=`<div class="plan-badge-row"><span class="plan-badge" style="background:var(--goal-bg);color:var(--goal-c);border:1px solid var(--goal-bd)">${st.planMode==="goal"?"目的":"課題"}</span><div><div class="plan-item-text">${selTopic.label}</div><div class="plan-item-sub">${selTopic.desc}</div></div></div>`;
+    bSk.forEach(s=>rows+=`<div class="plan-badge-row"><span class="plan-badge" style="background:var(--base-bg);color:var(--base-c);border:1px solid var(--base-bd)">ベース</span><div><div class="plan-item-text">${s.label}</div></div></div>`);
+    if(bodySk)rows+=`<div class="plan-badge-row"><span class="plan-badge" style="background:var(--body-bg);color:var(--body-c);border:1px solid var(--body-bd)">身体F</span><div><div class="plan-item-text">${bodySk.label}</div>${bodySk.extCue?`<div class="plan-item-sub">→「${bodySk.extCue}」</div>`:''}</div></div>`;
+    eSk.forEach(s=>rows+=`<div class="plan-badge-row"><span class="plan-badge" style="background:var(--ext-bg);color:var(--ext-c);border:1px solid var(--ext-bd)">外部F</span><div><div class="plan-item-text">${s.label}</div>${s.extCue?`<div class="plan-item-sub">→「${s.extCue}」</div>`:''}</div></div>`);
+    ca.innerHTML=`<div class="plan-card"><div class="plan-card-label">📋 今日の練習プラン</div>${rows}<div style="display:flex;gap:6px;margin-top:8px"><button class="btn-s" style="flex:1;font-size:10px;padding:4px" onclick="saveReview()">保存して振り返りへ</button><button onclick="clearPlan()" style="font-size:10px;color:#475569;background:none;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:3px 8px;cursor:pointer">クリア</button></div></div>`;
+  } else ca.innerHTML=`<div class="plan-empty">🎯 ${st.planMode==='free'?'下のリストからスキルを自由に選んでください':(st.topicId?"下のおすすめからスキルを選んでください":"まず上の"+(st.planMode==="goal"?"目的":"課題")+"を選択してください")}</div>`;
+  renderSuggestions();
+}
+
+function selectTopic(id){st.topicId=id;st.plan={baseIds:[],bodyId:null,extIds:[]};renderPlan();}
+function renderSuggestions(){
+  const sa=document.getElementById("suggest-area");let allSorted=[];const eff=calcEff();
+  if(st.planMode==="free") allSorted=[...skills].sort((a,b)=>(eff[b.id]||0)-(eff[a.id]||0));
+  else {
+    if(!st.topicId){sa.innerHTML="";return;}
+    const topic=(st.planMode==="goal"?GOALS:SYMPTOMS).find(t=>t.id===st.topicId);if(!topic){sa.innerHTML="";return;}
+    const relIds=topic.related||[];const relSkills=relIds.map(id=>skills.find(s=>s.id===id)).filter(Boolean).sort((a,b)=>(eff[b.id]||0)-(eff[a.id]||0));
+    const allRelated=new Set(relIds);relSkills.forEach(s=>s.prereqs.forEach(p=>allRelated.add(p)));
+    const extraSkills=skills.filter(s=>!relIds.includes(s.id)&&allRelated.has(s.id)).sort((a,b)=>(eff[b.id]||0)-(eff[a.id]||0));
+    allSorted=[...relSkills,...extraSkills];
+  }
+  const baseList=allSorted.filter(s=>s.focusType==="base"),bodyList=allSorted.filter(s=>s.focusType==="body"),extList=allSorted.filter(s=>s.focusType==="ext");
+  function row(sk,type){const onClass=type==="base"?"sel-base":type==="body"?"sel-body":"sel-ext",chkClass=type==="base"?"on-base":type==="body"?"on-body":"on-ext",isOn=type==="base"?st.plan.baseIds.includes(sk.id):type==="body"?st.plan.bodyId===sk.id:st.plan.extIds.includes(sk.id),fn=type==="base"?`togglePB('${sk.id}')`:type==="body"?`setPBody('${sk.id}')`:`togglePE('${sk.id}')`,ep=Math.round(((eff[sk.id]||0)/Math.max(...Object.values(eff),1))*100);return `<div class="srow${isOn?' '+onClass:''}" onclick="${fn}"><span class="sk-dot" style="background:${MS[sk.mastery].color}"></span><div style="flex:1;min-width:0"><div class="srow-name">${sk.label}</div>${sk.extCue?`<div class="srow-ext" style="color:${FT[sk.focusType].color}">→「${sk.extCue}」</div>`:''}</div><span class="srow-eff">${ep}</span><div class="srow-chk${isOn?' '+chkClass:''}">${isOn?'✓':''}</div></div>`;}
+  function sec(ic,bg,cl,tl,sb,it,ty){if(!it.length)return'';return `<div class="suggest-sec"><div class="suggest-hd"><span class="suggest-icon" style="background:${bg};color:${cl}">${ic}</span><span class="suggest-title">${tl}</span><span class="suggest-sub">${sb}</span></div>${it.map(s=>row(s,ty)).join("")}</div>`;}
+  const recommended=sec("🔷","var(--base-bg)","var(--base-c)","ベーススキル","複数選択可",baseList,"base")+sec("🔵","var(--body-bg)","var(--body-c)","身体フォーカス","1つだけ",bodyList,"body")+sec("🟢","var(--ext-bg)","var(--ext-c)","外部フォーカス","複数選択可",extList,"ext");
+  const manual=(st.planMode==="goal"||st.planMode==="symptom")?renderManualCustomizer(eff):"";
+  sa.innerHTML=recommended+manual;
+}
+
+function renderManualCustomizer(eff){
+  const all=[...skills].sort((a,b)=>(eff[b.id]||0)-(eff[a.id]||0));
+  const baseList=all.filter(s=>s.focusType==="base");
+  const bodyList=all.filter(s=>s.focusType==="body");
+  const extList=all.filter(s=>s.focusType==="ext");
+  const maxEff=Math.max(...Object.values(eff),1);
+  function row(sk,type){
+    const onClass=type==="base"?"sel-base":type==="body"?"sel-body":"sel-ext";
+    const chkClass=type==="base"?"on-base":type==="body"?"on-body":"on-ext";
+    const isOn=type==="base"?st.plan.baseIds.includes(sk.id):type==="body"?st.plan.bodyId===sk.id:st.plan.extIds.includes(sk.id);
+    const fn=type==="base"?`togglePB('${sk.id}')`:type==="body"?`setPBody('${sk.id}')`:`togglePE('${sk.id}')`;
+    const ep=Math.round(((eff[sk.id]||0)/maxEff)*100);
+    return `<div class="srow${isOn?' '+onClass:''}" onclick="${fn}"><span class="sk-dot" style="background:${MS[sk.mastery].color}"></span><div style="flex:1;min-width:0"><div class="srow-name">${sk.label}</div>${sk.extCue?`<div class="srow-ext" style="color:${FT[sk.focusType].color}">→「${sk.extCue}」</div>`:''}</div><span class="srow-eff">${ep}</span><div class="srow-chk${isOn?' '+chkClass:''}">${isOn?'✓':''}</div></div>`;
+  }
+  function sec(ic,bg,cl,tl,sb,it,ty){if(!it.length)return'';return `<div class="suggest-sec"><div class="suggest-hd"><span class="suggest-icon" style="background:${bg};color:${cl}">${ic}</span><span class="suggest-title">${tl}</span><span class="suggest-sub">${sb}</span></div>${it.map(s=>row(s,ty)).join("")}</div>`;}
+  return `<div class="plan-card" style="margin-top:10px;background:rgba(15,23,42,0.55)"><div class="plan-card-label">🧩 因果マップから手動で追加</div><div style="font-size:10px;color:#94a3b8;line-height:1.5;margin-bottom:8px">候補にない取り組みも、ここから直接プランに追加できます（身体フォーカスは1つのみ）。</div>${sec("🔷","var(--base-bg)","var(--base-c)","ベース（手動）","複数選択可",baseList,"base")}${sec("🔵","var(--body-bg)","var(--body-c)","身体フォーカス（手動）","1つだけ",bodyList,"body")}${sec("🟢","var(--ext-bg)","var(--ext-c)","外部フォーカス（手動）","複数選択可",extList,"ext")}</div>`;
+}
+
+function togglePB(id){if(st.plan.baseIds.includes(id))st.plan.baseIds=st.plan.baseIds.filter(x=>x!==id);else st.plan.baseIds.push(id);renderPlan();}
+function setPBody(id){st.plan.bodyId=st.plan.bodyId===id?null:id;renderPlan();}
+function togglePE(id){if(st.plan.extIds.includes(id))st.plan.extIds=st.plan.extIds.filter(x=>x!==id);else st.plan.extIds.push(id);renderPlan();}
+function clearPlan(){st.plan={baseIds:[],bodyId:null,extIds:[]};renderPlan();}
+
+function toDayKey(v){if(!v)return new Date().toISOString().slice(0,10);if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;const d=new Date(v);return isNaN(d)?new Date().toISOString().slice(0,10):d.toISOString().slice(0,10);}
+function normalizeReview(rv){
+  if(rv.items)return rv;
+  const items=[];
+  (rv.plan?.base||[]).forEach(n=>items.push({label:n,result:"notyet"}));
+  if(rv.plan?.body)items.push({label:rv.plan.body,result:"notyet"});
+  (rv.plan?.ext||[]).forEach(n=>items.push({label:n,result:"notyet"}));
+  return {id:rv.id||Date.now(),date:rv.date||new Date().toLocaleString(),dayKey:toDayKey(rv.date),mode:rv.mode||"plan",topic:rv.topic||null,balls:rv.balls||0,memo:rv.memo||"",items};
+}
+function saveReview(){
+  const topic=st.topicId?((st.planMode==='goal'?GOALS:SYMPTOMS).find(t=>t.id===st.topicId)):null;
+  const entry={id:Date.now(),date:new Date().toLocaleString(),dayKey:new Date().toISOString().slice(0,10),mode:st.planMode,topic:topic?topic.label:null,balls:0,memo:"",items:[
+    ...st.plan.baseIds.map(id=>({id,label:skills.find(s=>s.id===id).label,result:"notyet"})),
+    ...(st.plan.bodyId?[{id:st.plan.bodyId,label:skills.find(s=>s.id===st.plan.bodyId).label,result:"notyet"}]:[]),
+    ...st.plan.extIds.map(id=>({id,label:skills.find(s=>s.id===id).label,result:"notyet"}))
+  ]};
+  reviews.unshift(entry);saveAll();showScreen('review');
+}
+function reviewStats(){
+  const yy=st.reviewYear,mm=st.reviewMonth;
+  const norm=reviews.map(normalizeReview);
+  const byDay={};norm.forEach(r=>{byDay[r.dayKey]=(byDay[r.dayKey]||0)+1;});
+  let streak=0;
+  for(let i=0;i<365;i++){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);if(byDay[k])streak++;else break;}
+  const monthRows=norm.filter(r=>{const d=new Date(r.dayKey);return d.getFullYear()===yy&&d.getMonth()===mm;});
+  return {yy,mm,streak,monthCount:monthRows.length,monthBalls:monthRows.reduce((a,b)=>a+(Number(b.balls)||0),0),norm,monthRows};
+}
+function selectReviewDay(dayKey){st.reviewSelectedDayKey=st.reviewSelectedDayKey===dayKey?null:dayKey;renderReviews();}
+function renderCalendar(yy,mm,norm){
+  const first=new Date(yy,mm,1),last=new Date(yy,mm+1,0),start=first.getDay();
+  const map={};
+  norm.forEach(r=>{const d=new Date(r.dayKey);if(d.getFullYear()===yy&&d.getMonth()===mm){const dd=d.getDate();if(!map[dd])map[dd]={count:0,balls:0};map[dd].count++;map[dd].balls+=(Number(r.balls)||0);}});
+  const cells=[];for(let i=0;i<start;i++)cells.push('<div class="cal-cell off"></div>');
+  for(let d=1;d<=last.getDate();d++){
+    const v=map[d];
+    const dayKey=`${yy}-${String(mm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const sel=st.reviewSelectedDayKey===dayKey?' style="outline:2px solid #818cf8"':'';
+    cells.push(`<div class="cal-cell ${v?'on':''}" ${sel} onclick="selectReviewDay('${dayKey}')"><div>${d}</div>${v?`<div>${v.count}回</div><div>${v.balls}球</div>`:''}</div>`);
+  }
+  return `<div class="rv-card"><div class="cal-head"><button class="cal-btn" onclick="moveReviewYear(-1)">«年</button><button class="cal-btn" onclick="moveReviewMonth(-1)">‹月</button><div>${yy}年${mm+1}月</div><button class="cal-btn" onclick="moveReviewMonth(1)">月›</button><button class="cal-btn" onclick="moveReviewYear(1)">年»</button></div><div style="font-size:9px;color:#64748b;margin-bottom:4px">日付を選ぶとその日の振り返りだけ表示（再タップで解除）</div><div class="week-row"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div><div class="cal-grid">${cells.join("")}</div></div>`;
+}
+function renderHistory(rows){
+  const agg={};rows.forEach(r=>r.items.forEach(it=>{const k=it.label||it.id||"(不明)";if(!agg[k])agg[k]={done:0,no:0};if(it.result==="done")agg[k].done++;else agg[k].no++;}));
+  const rows2=Object.entries(agg).sort((a,b)=>(b[1].done+b[1].no)-(a[1].done+a[1].no)).slice(0,8);
+  if(!rows2.length)return `<div class="rv-empty">この月の履歴はありません</div>`;
+  const max=Math.max(...rows2.map(([,v])=>v.done+v.no),1);
+  return `<div class="rv-card"><div class="lbl">📊 スキル別登録回数（この月 / できた・できなかった）</div><div class="hist">${rows2.map(([k,v])=>`<div class="hist-row"><div style="font-size:9px">${k}</div><div class="hist-track"><div class="hist-done" style="width:${(v.done/max)*100}%"></div><div class="hist-no" style="width:${(v.no/max)*100}%"></div></div><div style="font-size:9px">${v.done+v.no}</div></div>`).join("")}</div></div>`;
+}
+function setReviewResult(id,idx,res){reviews=reviews.map(r=>{const n=normalizeReview(r);if(n.id!==id)return n;n.items[idx]={...n.items[idx],result:res};return n;});saveAll();renderReviews();}
+function updReview(id,p){reviews=reviews.map(r=>{const n=normalizeReview(r);return n.id===id?{...n,...p}:n;});saveAll();}
+function delReview(id){if(confirm("削除しますか？")){reviews=reviews.map(normalizeReview).filter(r=>r.id!==id);saveAll();renderReviews();}}
+function moveReviewMonth(step){
+  const d=new Date(st.reviewYear,st.reviewMonth+step,1);st.reviewYear=d.getFullYear();st.reviewMonth=d.getMonth();st.reviewSelectedDayKey=null;renderReviews();
+}
+function moveReviewYear(step){st.reviewYear+=step;st.reviewSelectedDayKey=null;renderReviews();}
+function renderReviews(){
+  const {yy,mm,streak,monthCount,monthBalls,norm,monthRows}=reviewStats();
+  const rl=document.getElementById("review-list");
+  const visibleRows=st.reviewSelectedDayKey?monthRows.filter(rv=>rv.dayKey===st.reviewSelectedDayKey):monthRows;
+  const cards=visibleRows.map(rv=>`<div class="rv-card"><div style="display:flex;justify-content:space-between"><div class="rv-date">${rv.date}</div><button onclick="delReview(${rv.id})" style="background:none;border:none;color:#475569;font-size:12px;cursor:pointer">✕</button></div>${rv.topic?`<div class="rv-topic">${rv.topic}</div>`:''}<div class="lbl">打ったボール数</div><input class="inp" type="number" min="0" value="${rv.balls||0}" onchange="updReview(${rv.id},{balls:Number(this.value)||0});renderReviews()">${rv.items.map((it,i)=>`<div class="rv-skill-row"><span style="font-size:10px">${it.label||it.id}</span><div class="rv-seg"><button class="${it.result==='done'?'on-done':''}" onclick="setReviewResult(${rv.id},${i},'done')">できた</button><button class="${it.result!=='done'?'on-no':''}" onclick="setReviewResult(${rv.id},${i},'notyet')">できなかった</button></div></div>`).join('')}<div class="rv-memo-area"><div class="lbl">振り返りメモ</div><textarea class="rv-memo" onchange="updReview(${rv.id},{memo:this.value})" placeholder="気づき・反省点など…">${rv.memo||''}</textarea></div></div>`).join("");
+  rl.innerHTML=`<div class="stats-grid"><div class="stat-card"><div class="stat-v">${streak}</div><div class="stat-l">日間連続練習達成！</div></div><div class="stat-card"><div class="stat-v">${monthCount}</div><div class="stat-l">この月は${monthCount}回練習</div></div><div class="stat-card"><div class="stat-v">${monthBalls}</div><div class="stat-l">打ったボールの数</div></div></div>${renderCalendar(yy,mm,norm)}${renderHistory(monthRows)}${cards||'<div class="rv-empty">選択日の振り返りはありません。</div>'}`;
+}
+
+function getApiKey(){let k=localStorage.getItem("golf_ai_key");if(!k){k=prompt("Anthropic API キーを入力してください（保存されます）");if(k)localStorage.setItem("golf_ai_key",k);}return k;}
+async function handleAI(){
+  const inp=document.getElementById("ai-input").value.trim();if(!inp)return;
+  const key=getApiKey();if(!key)return;
+  const statusEl=document.getElementById("ai-status"),resEl=document.getElementById("ai-result"),btn=document.getElementById("ai-send-btn");
+  btn.disabled=true;statusEl.innerHTML=`<div class="loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>AIが分析中…</div>`;resEl.innerHTML="";
+  const info=skills.map(s=>`${s.id}(${s.label},${FT[s.focusType].label},習得:${MS[s.mastery].label})`).join("; ");
+  const pr=`あなたはゴルフコーチです。以下のスキルDBを基にユーザーの悩みに対し練習プランを提案して。\n【スキルDB】${info}\n【悩み】${inp}\n回答はJSONのみ：{"analysis":"原因","baseIds":["ID"],"bodyId":"ID","extIds":["ID"],"reason":"理由"}`;
+  try{
+    const req=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-3-5-sonnet-20240620",max_tokens:512,messages:[{role:"user",content:pr}]})});
+    if(!req.ok)throw new Error(await req.text());
+    const data=await req.json(),txt=data.content[0].text,m=txt.match(/\{[\s\S]*\}/);if(!m)throw new Error("JSON解析失敗");
+    const p=JSON.parse(m[0]);
+    if(p.baseIds)st.plan.baseIds=p.baseIds.filter(id=>skills.find(s=>s.id===id));
+    if(p.bodyId&&skills.find(s=>s.id===p.bodyId))st.plan.bodyId=p.bodyId;
+    if(p.extIds)st.plan.extIds=p.extIds.filter(id=>skills.find(s=>s.id===id));
+    statusEl.innerHTML="";resEl.innerHTML=`<div style="padding:8px;background:var(--ac-bg);border:1px solid var(--ac-bd);border-radius:8px;margin-top:5px;font-size:10px"><b>🤖 AIの分析:</b> ${p.analysis}<br><b>💡 理由:</b> ${p.reason}</div>`;renderPlan();
+  }catch(e){statusEl.innerHTML=`<div class="err-box">エラー: ${String(e.message).slice(0,100)}</div>`;}btn.disabled=false;
+}
+
+function showScreen(n){document.querySelectorAll(".screen").forEach(el=>el.classList.remove("active"));document.getElementById("screen-"+n).classList.add("active");document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("on"));document.getElementById("nav-"+n).classList.add("on");st.screen=n;if(n==="map")renderMap();if(n==="plan")renderPlan();if(n==="review")renderReviews();}
+function toggleLegend(){const p=document.getElementById("legend-panel"),b=document.getElementById("legend-btn");if(p.style.display==="none"){p.style.display="flex";b.classList.add("on");}else{p.style.display="none";b.classList.remove("on");}}
+function closeOv(id){document.getElementById(id).classList.remove("open");}
+
+renderMap();renderPlan();renderReviews();
+</script>
+</body>
+</html>
