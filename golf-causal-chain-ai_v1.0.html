@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Golf Causal Chain AI v1.2</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --card: rgba(15, 23, 42, 0.86);
+      --line: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --danger: #f43f5e;
+      --ok: #22c55e;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .title { font-size: 1.8rem; margin: 0; color: var(--primary); }
+    .subtitle { margin: 8px 0 16px; color: var(--muted); }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .tab-btn { border: 1px solid var(--line); background: #0f172a; color: var(--text); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+    .tab-btn.active { background: #082f49; border-color: var(--primary); color: #bae6fd; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 960px) { .grid { grid-template-columns: 1fr 1fr; } }
+
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+    .card h2 { font-size: 1.1rem; margin: 0 0 10px; color: #bae6fd; }
+    label { display: block; font-size: 0.9rem; color: var(--muted); margin: 10px 0 6px; }
+    textarea, input, select { width: 100%; background: #0f172a; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-size: 0.95rem; }
+    textarea { min-height: 140px; }
+
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: #1e293b; color: var(--text); cursor: pointer; }
+    button.primary { background: var(--primary); color: #082f49; border-color: #7dd3fc; font-weight: 700; }
+    button.success { background: #14532d; border-color: #22c55e; color: #dcfce7; }
+    button.danger { color: #fecdd3; border-color: var(--danger); background: rgba(244, 63, 94, .12); }
+
+    .error { color: #fde68a; font-size: 0.9rem; margin-top: 8px; white-space: pre-wrap; }
+    .ok { color: #86efac; font-size: 0.9rem; margin-top: 8px; white-space: pre-wrap; }
+
+    .node-edit-row { display: grid; grid-template-columns: 30px 1fr auto auto auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .node-index { color: var(--muted); font-size: 0.8rem; text-align: right; }
+
+    .chain-node { border: 1px solid #0ea5e9; background: rgba(14, 165, 233, .08); padding: 10px; border-radius: 10px; }
+    .arrow { text-align: center; color: var(--primary); margin: 2px 0; }
+
+    .saved-item { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 10px; background: rgba(2,6,23,.5); }
+    .saved-meta { color: var(--muted); font-size: .8rem; }
+
+    .preview-help { margin-top: 10px; font-size: 0.86rem; color: var(--muted); background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1 class="title">Golf Causal Chain AI</h1>
+    <p class="subtitle">ゴルフスイングの原因→結果を、AI生成と手動編集で整理するアプリ。</p>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="editorTab">入力・編集</button>
+      <button class="tab-btn" data-tab="savedTab">登録済みチェーン</button>
+      <button class="tab-btn" data-tab="mapTab">因果チェーンマップ</button>
+    </nav>
+
+    <section id="editorTab" class="tab-panel active">
+      <div class="grid">
+        <article class="card">
+          <h2>1) 相談・気づきを入力</h2>
+          <textarea id="memo" placeholder="例: 切り返しで胸が先に開いてしまい、トップやスライスが出る。"></textarea>
+
+          <label for="apiKey">Gemini APIキー（任意）</label>
+          <input id="apiKey" placeholder="AIza..." />
+
+          <label for="chainTitle">登録名（任意）</label>
+          <input id="chainTitle" placeholder="例: ドライバースライス修正案" />
+
+          <div class="row" style="margin-top: 10px;">
+            <button id="generateBtn" class="primary">AIで因果チェーン生成</button>
+            <button id="sampleBtn">サンプルに戻す</button>
+            <button id="registerBtn" class="success">因果チェーンを登録</button>
+          </div>
+          <div id="error" class="error"></div>
+          <div id="ok" class="ok"></div>
+          <div class="preview-help">
+            プレビューできない場合は、このHTMLをブラウザで直接開くか、
+            <code>python3 -m http.server 4173</code> で起動して
+            <code>http://localhost:4173/golf-causal-chain-ai_v1.0.html</code> にアクセスしてください。
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>2) 手動で調整</h2>
+          <div class="row" style="margin-bottom: 10px;">
+            <button id="addNodeBtn">+ ノード追加</button>
+          </div>
+          <div id="nodeEditor"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="savedTab" class="tab-panel">
+      <article class="card">
+        <h2>登録済み 因果チェーン</h2>
+        <div id="savedList"></div>
+      </article>
+    </section>
+
+    <section id="mapTab" class="tab-panel">
+      <div class="grid">
+        <article class="card">
+          <h2>因果チェーンマップ設定</h2>
+          <label for="mapSelector">表示するチェーン</label>
+          <select id="mapSelector"></select>
+          <label for="mapNewNode">マップにノードを手動追加</label>
+          <input id="mapNewNode" placeholder="例: フェースが開いたまま当たる" />
+          <div class="row" style="margin-top: 10px;">
+            <button id="mapAddNodeBtn">マップへ追加</button>
+          </div>
+          <div class="saved-meta" style="margin-top:8px;">※ マップ追加は選択中チェーンにも反映されます。</div>
+        </article>
+
+        <article class="card">
+          <h2>因果チェーンマップ</h2>
+          <div id="chainMapView"></div>
+          <textarea id="chainMapText" readonly></textarea>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const initialNodes = [
+      "切り返しで上半身が先に動く",
+      "体の回転が先行する",
+      "クラブが外から入りやすい",
+      "入射が安定しない",
+      "スピンが増える or 球が軽くなる",
+      "方向がばらつく"
+    ];
+
+    let nodes = [...initialNodes];
+    let savedChains = JSON.parse(localStorage.getItem('saved_causal_chains') || '[]');
+
+    const memoEl = document.getElementById('memo');
+    const apiKeyEl = document.getElementById('apiKey');
+    const chainTitleEl = document.getElementById('chainTitle');
+    const errorEl = document.getElementById('error');
+    const okEl = document.getElementById('ok');
+    const nodeEditorEl = document.getElementById('nodeEditor');
+    const generateBtn = document.getElementById('generateBtn');
+    const savedListEl = document.getElementById('savedList');
+    const mapSelectorEl = document.getElementById('mapSelector');
+    const chainMapViewEl = document.getElementById('chainMapView');
+    const chainMapTextEl = document.getElementById('chainMapText');
+
+    apiKeyEl.value = localStorage.getItem('gemini_api_key') || '';
+    apiKeyEl.addEventListener('input', () => localStorage.setItem('gemini_api_key', apiKeyEl.value));
+
+    function persistChains() {
+      localStorage.setItem('saved_causal_chains', JSON.stringify(savedChains));
+    }
+
+    function activateTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === tabId));
+    }
+
+    function clearMsgs() {
+      errorEl.textContent = '';
+      okEl.textContent = '';
+    }
+
+    function renderEditor() {
+      nodeEditorEl.innerHTML = '';
+      nodes.forEach((node, i) => {
+        const row = document.createElement('div');
+        row.className = 'node-edit-row';
+
+        const idx = document.createElement('div'); idx.className = 'node-index'; idx.textContent = String(i + 1);
+        const input = document.createElement('input');
+        input.value = node;
+        input.addEventListener('input', (e) => { nodes[i] = e.target.value; renderMap(); renderSavedList(); });
+
+        const upBtn = document.createElement('button'); upBtn.textContent = '↑'; upBtn.addEventListener('click', () => moveNode(i, -1));
+        const downBtn = document.createElement('button'); downBtn.textContent = '↓'; downBtn.addEventListener('click', () => moveNode(i, 1));
+        const delBtn = document.createElement('button'); delBtn.textContent = '削除'; delBtn.className = 'danger';
+        delBtn.addEventListener('click', () => { nodes = nodes.filter((_, idx2) => idx2 !== i); renderEditor(); renderMap(); });
+
+        row.append(idx, input, upBtn, downBtn, delBtn);
+        nodeEditorEl.appendChild(row);
+      });
+    }
+
+    function renderSavedList() {
+      savedListEl.innerHTML = '';
+      if (!savedChains.length) {
+        savedListEl.innerHTML = '<div class="saved-meta">登録されたチェーンはまだありません。</div>';
+        return;
+      }
+
+      savedChains.forEach((chain) => {
+        const box = document.createElement('div');
+        box.className = 'saved-item';
+
+        const title = document.createElement('div');
+        title.textContent = chain.title;
+
+        const meta = document.createElement('div');
+        meta.className = 'saved-meta';
+        meta.textContent = `${chain.createdAt} / ${chain.nodes.length}ノード`;
+
+        const txt = document.createElement('div');
+        txt.style.whiteSpace = 'pre-wrap';
+        txt.style.marginTop = '8px';
+        txt.textContent = chain.nodes.join('\n↓\n');
+
+        const actions = document.createElement('div');
+        actions.className = 'row';
+        actions.style.marginTop = '8px';
+
+        const loadBtn = document.createElement('button');
+        loadBtn.textContent = '編集に読み込む';
+        loadBtn.addEventListener('click', () => {
+          nodes = [...chain.nodes];
+          chainTitleEl.value = chain.title;
+          activateTab('editorTab');
+          renderEditor();
+          renderMap();
+          clearMsgs();
+          okEl.textContent = `「${chain.title}」を読み込みました。`;
+        });
+
+        const mapBtn = document.createElement('button');
+        mapBtn.textContent = 'マップで確認';
+        mapBtn.addEventListener('click', () => {
+          mapSelectorEl.value = chain.id;
+          activateTab('mapTab');
+          renderMap();
+        });
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'danger';
+        delBtn.textContent = '削除';
+        delBtn.addEventListener('click', () => {
+          savedChains = savedChains.filter(c => c.id !== chain.id);
+          persistChains();
+          renderSavedList();
+          renderMapSelector();
+          renderMap();
+        });
+
+        actions.append(loadBtn, mapBtn, delBtn);
+        box.append(title, meta, txt, actions);
+        savedListEl.appendChild(box);
+      });
+    }
+
+    function renderMapSelector() {
+      mapSelectorEl.innerHTML = '';
+      const liveOpt = document.createElement('option');
+      liveOpt.value = '__current__';
+      liveOpt.textContent = '現在編集中のチェーン';
+      mapSelectorEl.appendChild(liveOpt);
+
+      savedChains.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.title;
+        mapSelectorEl.appendChild(opt);
+      });
+    }
+
+    function getSelectedMapNodes() {
+      const id = mapSelectorEl.value || '__current__';
+      if (id === '__current__') return nodes;
+      const chain = savedChains.find(c => c.id === id);
+      return chain ? chain.nodes : [];
+    }
+
+    function setSelectedMapNodes(nextNodes) {
+      const id = mapSelectorEl.value || '__current__';
+      if (id === '__current__') {
+        nodes = nextNodes;
+        renderEditor();
+        return;
+      }
+      const idx = savedChains.findIndex(c => c.id === id);
+      if (idx >= 0) {
+        savedChains[idx].nodes = nextNodes;
+        persistChains();
+        renderSavedList();
+      }
+    }
+
+    function renderMap() {
+      const mapNodes = getSelectedMapNodes();
+      chainMapViewEl.innerHTML = '';
+      chainMapTextEl.value = mapNodes.join('\n↓\n');
+
+      mapNodes.forEach((node, i) => {
+        const n = document.createElement('div');
+        n.className = 'chain-node';
+        n.textContent = node;
+        chainMapViewEl.appendChild(n);
+
+        if (i < mapNodes.length - 1) {
+          const arrow = document.createElement('div');
+          arrow.className = 'arrow';
+          arrow.textContent = '↓';
+          chainMapViewEl.appendChild(arrow);
+        }
+      });
+    }
+
+    function moveNode(index, dir) {
+      const next = index + dir;
+      if (next < 0 || next >= nodes.length) return;
+      [nodes[index], nodes[next]] = [nodes[next], nodes[index]];
+      renderEditor(); renderMap();
+    }
+
+    function parseFallback(text) {
+      return text.split(/\n|→|->|↓/g).map(v => v.trim()).filter(Boolean).slice(0, 8);
+    }
+
+    function buildPrompt(inputText) {
+      return `あなたはゴルフコーチです。以下の相談から、因果チェーンをJSONで返してください。\n\n要件:\n- 出力はJSONのみ\n- 形式: {"nodes":["原因1","原因2",...,"結果"]}\n- ノード数は4〜8\n- 因果順に並べる\n- ゴルフスイングの具体語を含める\n\n相談:\n${inputText}`;
+    }
+
+    async function generateByAI() {
+      clearMsgs();
+      const memo = memoEl.value.trim();
+      const apiKey = apiKeyEl.value.trim();
+      if (!memo) return void (errorEl.textContent = '相談内容を入力してください。');
+
+      if (!apiKey) {
+        const parsed = parseFallback(memo);
+        if (parsed.length >= 2) {
+          nodes = parsed; renderEditor(); renderMap();
+          okEl.textContent = 'APIキー未設定のため、入力文から簡易抽出しました。';
+        } else {
+          errorEl.textContent = 'Gemini APIキーを設定するか、矢印/改行で2項目以上を入力してください。';
+        }
+        return;
+      }
+
+      generateBtn.disabled = true;
+      generateBtn.textContent = '生成中...';
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: buildPrompt(memo) }] }],
+            generationConfig: { temperature: 0.4, responseMimeType: 'application/json' }
+          })
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        const parsed = JSON.parse(raw);
+        const resultNodes = Array.isArray(parsed.nodes) ? parsed.nodes.map(v => String(v).trim()).filter(Boolean).slice(0, 8) : [];
+        if (resultNodes.length < 2) throw new Error('AIの出力を解析できませんでした。');
+        nodes = resultNodes;
+        renderEditor(); renderMap();
+        okEl.textContent = 'AIで因果チェーンを生成しました。';
+      } catch (e) {
+        errorEl.textContent = `AI生成に失敗しました: ${e.message}`;
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'AIで因果チェーン生成';
+      }
+    }
+
+    function registerCurrentChain() {
+      clearMsgs();
+      const validNodes = nodes.map(v => String(v).trim()).filter(Boolean);
+      if (validNodes.length < 2) return void (errorEl.textContent = '登録には2ノード以上必要です。');
+      const title = chainTitleEl.value.trim() || `因果チェーン ${new Date().toLocaleString('ja-JP')}`;
+      const id = `chain_${Date.now()}`;
+      savedChains.unshift({ id, title, nodes: validNodes, createdAt: new Date().toLocaleString('ja-JP') });
+      persistChains();
+      renderSavedList();
+      renderMapSelector();
+      okEl.textContent = `「${title}」を登録しました。`;
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+    document.getElementById('addNodeBtn').addEventListener('click', () => { nodes.push('新しい要素'); renderEditor(); renderMap(); });
+    document.getElementById('sampleBtn').addEventListener('click', () => { nodes = [...initialNodes]; clearMsgs(); renderEditor(); renderMap(); });
+    document.getElementById('registerBtn').addEventListener('click', registerCurrentChain);
+    generateBtn.addEventListener('click', generateByAI);
+
+    mapSelectorEl.addEventListener('change', renderMap);
+    document.getElementById('mapAddNodeBtn').addEventListener('click', () => {
+      const val = document.getElementById('mapNewNode').value.trim();
+      if (!val) return;
+      const mapNodes = [...getSelectedMapNodes(), val];
+      setSelectedMapNodes(mapNodes);
+      document.getElementById('mapNewNode').value = '';
+      renderMap();
+    });
+
+    renderMapSelector();
+    renderEditor();
+    renderSavedList();
+    renderMap();
+  </script>
+</body>
+</html>
+
